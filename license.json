@@ -1,0 +1,7 @@
+{
+  "license_key": "A088-662F-8D2F-BF7C",
+  "product_id": "telegram-mini-app-3daeda",
+  "validation_url": "https://license-management-production.up.railway.app/api/licenses/validate",
+  "info_url": "https://license-management-production.up.railway.app/api/licenses/info",
+  "version": "1.0.0"
+}
