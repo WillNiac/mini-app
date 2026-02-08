@@ -2685,6 +2685,80 @@ router.get('/faucetpay/balance', authenticateAdmin, requireValidLicense, async (
   }
 });
 
+// Fetch exchange rates from CoinGecko
+router.post('/faucetpay/exchange-rates', authenticateAdmin, requireValidLicense, async (req, res) => {
+  try {
+    const axios = require('axios');
+
+    // Map FaucetPay currency codes to CoinGecko IDs
+    const COINGECKO_IDS = {
+      BTC: 'bitcoin',
+      ETH: 'ethereum',
+      DOGE: 'dogecoin',
+      LTC: 'litecoin',
+      BCH: 'bitcoin-cash',
+      DASH: 'dash',
+      DGB: 'digibyte',
+      TRX: 'tron',
+      USDT: 'tether',
+      FEY: 'feyorra',
+      ZEC: 'zcash',
+      BNB: 'binancecoin',
+      SOL: 'solana',
+      XRP: 'ripple',
+      POL: 'matic-network',
+      ADA: 'cardano',
+      TON: 'the-open-network',
+      XLM: 'stellar',
+      USDC: 'usd-coin',
+      XMR: 'monero',
+      TARA: 'taraxa',
+      TRUMP: 'official-trump',
+      PEPE: 'pepe',
+      FLT: 'fluence-2'
+    };
+
+    const coinIds = Object.values(COINGECKO_IDS).join(',');
+
+    const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+      params: {
+        ids: coinIds,
+        vs_currencies: 'usd'
+      },
+      timeout: 15000
+    });
+
+    const rates = {};
+    const failed = [];
+
+    for (const [code, geckoId] of Object.entries(COINGECKO_IDS)) {
+      const price = response.data?.[geckoId]?.usd;
+      if (price !== undefined && price !== null) {
+        rates[code] = price;
+      } else {
+        failed.push(code);
+      }
+    }
+
+    res.json({
+      success: true,
+      rates,
+      failed,
+      message: failed.length > 0
+        ? `Fetched ${Object.keys(rates).length} rates. Could not fetch: ${failed.join(', ')}`
+        : `Successfully fetched ${Object.keys(rates).length} exchange rates`
+    });
+  } catch (error) {
+    console.error('CoinGecko exchange rates error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.response?.status === 429
+        ? 'CoinGecko rate limit reached. Please try again in a minute.'
+        : error.message || 'Failed to fetch exchange rates from CoinGecko'
+    });
+  }
+});
+
 router.get('/export/users', authenticateAdmin, requireValidLicense, async (req, res) => {
   try {
     const users = await User.find()

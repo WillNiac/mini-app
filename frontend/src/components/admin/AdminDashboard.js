@@ -2470,6 +2470,7 @@ function FaucetPayTab() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState(null);
+  const [fetchingRates, setFetchingRates] = useState(false);
   const isMountedRef = useRef(true);
 
   const SUPPORTED_CURRENCIES = [
@@ -2629,6 +2630,28 @@ function FaucetPayTab() {
       setTestResult({ success: false, message: error.response?.data?.message || 'Connection test failed' });
     } finally {
       setTesting(false);
+    }
+  };
+
+  const fetchExchangeRates = async () => {
+    setFetchingRates(true);
+    try {
+      const response = await axios.post('/admin/faucetpay/exchange-rates');
+      if (response.data.success && response.data.rates) {
+        setSettings(prev => ({
+          ...prev,
+          faucetpayExchangeRates: {
+            ...prev.faucetpayExchangeRates,
+            ...response.data.rates
+          }
+        }));
+        alert(response.data.message || 'Exchange rates fetched successfully! Click "Save Exchange Rates" to apply.');
+      }
+    } catch (error) {
+      console.error('Fetch exchange rates error:', error);
+      alert(error.response?.data?.message || 'Failed to fetch exchange rates from CoinGecko');
+    } finally {
+      setFetchingRates(false);
     }
   };
 
@@ -2961,14 +2984,23 @@ function FaucetPayTab() {
 
               {/* Exchange Rates Configuration */}
               <div className="card">
-                <div className="card-header">
+                <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                   <h2 className="card-title">
                     <span className="card-icon">💱</span>
                     Coin Exchange Rates
                   </h2>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={fetchExchangeRates}
+                    disabled={fetchingRates}
+                    style={{ fontSize: '13px', padding: '6px 14px' }}
+                  >
+                    {fetchingRates ? '⏳ Fetching...' : '🔄 Fetch Rates from CoinGecko'}
+                  </button>
                 </div>
                 <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
                   Set the USD value per 1 coin for each cryptocurrency. These rates are used to convert user's balance to the crypto amount when withdrawing.
+                  Use the button above to auto-fill current rates from CoinGecko, then save.
                   <br /><strong>Example:</strong> If BTC rate is 96000, then $1 USD = 0.00001042 BTC
                 </p>
                 
