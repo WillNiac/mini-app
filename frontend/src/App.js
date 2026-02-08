@@ -744,7 +744,7 @@ function UserApp() {
             <>
               <p>Please open this app from Telegram to continue.</p>
               <a 
-                href="https://t.me/miniFaucet_bot" 
+                href="https://t.me/moneyfaucetplaybot" 
                 className="btn btn-primary"
                 style={{ marginTop: '20px', display: 'inline-block', textDecoration: 'none' }}
               >
